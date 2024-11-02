@@ -20,9 +20,9 @@ async def all_users(db: Annotated[Session, Depends(get_db)]):
 
 @router.get('/user_id')
 async def user_by_id(db: Annotated[Session, Depends(get_db)], user_id: int):
-    user = db.scalar(select(User).where(User.id == user_id))
-    if user is not None:
-        return user
+    users_id = db.scalar(select(User).where(User.id == user_id))
+    if users_id is not None:
+        return users_id
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -47,8 +47,8 @@ async def create_user(db: Annotated[Session, Depends(get_db)], create_user: Crea
 
 @router.put('/update')
 async def update_user(db: Annotated[Session, Depends(get_db)], user_id: int, update_user: UpdateUser):
-    user = db.scalar(select(User).where(User.id == user_id))
-    if user is not None:
+    user_update = db.scalar(select(User).where(User.id == user_id))
+    if user_update is not None:
         db.execute(update(User).where(User.id == user_id).values(
             firstname=update_user.firstname,
             lastname=update_user.lastname,
@@ -67,14 +67,28 @@ async def update_user(db: Annotated[Session, Depends(get_db)], user_id: int, upd
 
 @router.delete('/delete')
 async def delete_user(db: Annotated[Session, Depends(get_db)], user_id: int):
-    user = db.scalar(select(User).where(User.id == user_id))
-    if user is not None:
+    user_delete = db.scalar(select(User).where(User.id == user_id))
+    if user_delete is not None:
+        db.execute(delete(Task).where(Task.user_id == user_id))
         db.execute(delete(User).where(User.id == user_id))
         db.commit()
         return {
             'status_code': status.HTTP_200_OK,
             'transaction': 'User delete is successful!'
         }
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User was not found'
+        )
+
+
+@router.get('/user_id/tasks')
+async def tasks_by_user_id(db: Annotated[Session, Depends(get_db)], user_id: int):
+    users_tasks_id = db.scalar(select(User).where(User.id == user_id))
+    if users_tasks_id is not None:
+        tasks_user = db.scalars(select(Task).where(Task.user_id == users_tasks_id.id)).all()
+        return tasks_user
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
