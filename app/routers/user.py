@@ -37,10 +37,6 @@ async def create_user(db: Annotated[Session, Depends(get_db)], create_user: Crea
                                    lastname=create_user.lastname,
                                    age=create_user.age,
                                    slug=slugify(create_user.username)))
-    username: str
-    firstname: str
-    lastname: str
-    age: int
 
     db.commit()
     return {
